@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Xoriguer QR</title>
+<meta name="description" content="Codis QR de la família Xoriguer: emergència, dades mèdiques, contactes, negoci, WiFi i contrasenyes xifrades.">
+<meta name="theme-color" content="#0A0B0E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Xoriguer QR">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="marca/marca.css">
+</head>
+<body>
+<header class="cap">
+  <img class="cap-simbol" src="icons/simbol.png" alt="">
+  <div class="cap-rotul">
+    <span class="xm-mot" aria-label="Xoriguer"><svg class="xm-x" viewBox="0 0 242 153" aria-hidden="true"><path fill="currentColor" d="M96.3,19.0 L94.7,18.0 L46.7,18.3 L50.7,25.0 L73.0,53.3 L91.3,78.7 L15.3,140.0 L0.3,151.0 L0.0,152.7 L48.3,152.7 L139.7,79.3 L136.7,73.3Z M146.3,87.0 L146.7,88.7 L130.0,109.3 L129.0,112.3 L122.7,118.7 L147.0,152.3 L195.7,152.7 L195.7,151.3 L173.7,123.3 L147.7,87.7Z"/><path fill="#FF8A00" d="M241.7,0.0 L199.3,0.0 L137.3,51.0 L137.0,52.7 L152.3,74.0Z"/><path fill="#F2650F" d="M146.7,88.3 L144.7,88.7 L109.3,118.0 L103.3,122.0 L85.7,136.7 L72.0,149.7 L76.0,148.7 L91.0,139.7 L123.0,118.0 L128.7,112.3 L129.7,109.3Z"/></svg><i class="xm-resta">ORIGUER</i></span>
+    <span class="xm-sub">QR</span>
+  </div>
+</header>
+
+<nav class="pestanyes" id="nav">
+  <button data-v="fitxes" class="on"><span>🗂️</span>Fitxes</button>
+  <button data-v="personal"><span>✏️</span>Personalitzat</button>
+  <button data-v="meus"><span>⭐</span>Els meus</button>
+  <button data-v="llegir"><span>📷</span>Llegir</button>
+  <button data-v="mes"><span>⚙️</span>Més</button>
+</nav>
+
+<main id="app">
+  <!-- FITXES -->
+  <section class="vista on" id="v-fitxes">
+    <h2>Fitxes preestablertes</h2>
+    <p class="ajuda">Tria una fitxa, omple només les dades i el QR es fa sol.</p>
+    <div class="graella" id="llista-fitxes"></div>
+    <div id="bloc-fitxes-meves" hidden>
+      <h2>Les meves fitxes</h2>
+      <p class="ajuda">Fitxes que has creat tu a «Personalitzat».</p>
+      <div class="graella" id="llista-fitxes-meves"></div>
+    </div>
+  </section>
+
+  <!-- PERSONALITZAT -->
+  <section class="vista" id="v-personal">
+    <h2>QR personalitzat</h2>
+    <p class="ajuda">Posa-hi els camps que vulguis. Pots desar-ho com a fitxa teva per reutilitzar-la (per a cada membre de la família, per exemple).</p>
+    <div class="botons">
+      <button class="b gran" id="nou-personal">➕ Crear un QR amb camps meus</button>
+    </div>
+  </section>
+
+  <!-- ELS MEUS -->
+  <section class="vista" id="v-meus">
+    <h2>Els meus QR</h2>
+    <div class="filtres">
+      <input type="search" id="cerca" placeholder="Cerca…">
+      <select id="filtre-persona"><option value="">Tota la família</option></select>
+    </div>
+    <div id="llista-meus" class="llista"></div>
+    <p class="buit" id="meus-buit">Encara no has desat cap QR. Crea'n un a «Fitxes» o «Personalitzat» i prem <b>Desa</b>.</p>
+  </section>
+
+  <!-- LLEGIR -->
+  <section class="vista" id="v-llegir">
+    <h2>Llegir un QR</h2>
+    <div class="botons">
+      <button class="b gran" id="obre-camera">📷 Obre la càmera</button>
+      <label class="b gran sec">🖼️ Des d'una imatge<input type="file" id="llegeix-imatge" accept="image/*" hidden></label>
+    </div>
+    <div class="camera" id="camera" hidden>
+      <video id="video" playsinline muted></video>
+      <div class="mira"></div>
+      <button class="b sec" id="tanca-camera">Tanca la càmera</button>
+    </div>
+    <div id="resultat" class="resultat" hidden></div>
+  </section>
+
+  <!-- MÉS -->
+  <section class="vista" id="v-mes">
+    <h2>Família</h2>
+    <p class="ajuda">Noms per classificar els QR de cadascú.</p>
+    <div id="persones" class="xips"></div>
+    <div class="fila"><input id="nova-persona" placeholder="Nom (Mare, Pare, Avi…)"><button class="b" id="afegeix-persona">Afegeix</button></div>
+
+    <h2>Còpia de seguretat</h2>
+    <p class="ajuda">Les dades es guarden <b>només en aquest aparell</b>. Desa una còpia per passar-les a un altre (PC ⇄ mòbil) o per no perdre-les.</p>
+    <div class="botons">
+      <button class="b" id="exporta">💾 Desa còpia (.json)</button>
+      <label class="b sec">📂 Recupera còpia<input type="file" id="importa" accept=".json,application/json" hidden></label>
+    </div>
+    <p class="ajuda petit" id="ultima-copia"></p>
+
+    <h2>Consells</h2>
+    <ul class="consells">
+      <li><b>Emergència:</b> fes-ne el <b>fons de pantalla de bloqueig</b> (botó «Fons de pantalla») i un <b>adhesiu</b> per al casc, la cartera o el cotxe. Activa també la «Fitxa mèdica» del mòbil (iPhone: Salut → Fitxa mèdica · Android: Seguretat i emergència).</li>
+      <li><b>Contrasenyes:</b> un QR es llegeix amb qualsevol mòbil. Per això les contrasenyes van sempre <b>xifrades</b> amb una frase secreta. Si la perds, no es pot recuperar.</li>
+      <li>Fes servir el QR fosc sobre blanc per imprimir: és el que es llegeix millor.</li>
+    </ul>
+    <p class="peu">Xoriguer QR · v<span id="versio"></span> · Tot funciona sense connexió i res no surt d'aquest aparell.</p>
+  </section>
+</main>
+
+<!-- EDITOR -->
+<div class="editor" id="editor" hidden>
+  <div class="ed-barra">
+    <button class="b sec" id="ed-tanca">← Enrere</button>
+    <h2 id="ed-titol">Fitxa</h2>
+  </div>
+  <div class="ed-cos">
+    <form class="ed-form" id="ed-form" autocomplete="off" onsubmit="return false">
+      <div class="camp"><label for="ed-nom">Nom d'aquest QR</label><input id="ed-nom" placeholder="Es posa sol"></div>
+      <div class="camp"><label for="ed-persona">De qui és</label><select id="ed-persona"></select></div>
+      <div id="ed-camps"></div>
+      <div id="ed-extra"></div>
+      <details class="opcions" id="ed-aspecte">
+        <summary>🎨 Aspecte i logo</summary>
+
+        <div class="grup">Estils ràpids</div>
+        <div class="xips" id="op-estils"></div>
+
+        <div class="grup">Logo al mig</div>
+        <div class="logos" id="op-logos"></div>
+        <label class="b sec petit">⬆️ Puja el teu logo<input type="file" id="op-puja-logo" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" hidden></label>
+        <div id="op-logo-opcions" hidden>
+          <label class="mini rang">Mida <input type="range" id="op-logoMida" min="12" max="30" step="1"> <span id="op-logoMida-v"></span></label>
+          <div class="fila">
+            <label class="mini">Placa
+              <select id="op-logoPlaca"><option value="quadrat">Quadrada</option><option value="rodo">Rodona</option><option value="cap">Sense placa</option></select></label>
+            <label class="mini">Color de la placa <input type="color" id="op-logoFons"></label>
+          </div>
+        </div>
+
+        <div class="grup">Forma</div>
+        <div class="fila">
+          <label class="mini">Punts
+            <select id="op-punts"><option value="quadrat">Quadrats</option><option value="arrodonit">Arrodonits</option><option value="punts">Rodons</option><option value="barres">Barres</option></select></label>
+          <label class="mini">Ulls
+            <select id="op-formaUlls"><option value="quadrat">Quadrats</option><option value="arrodonit">Arrodonits</option><option value="rodo">Rodons</option><option value="fulla">Fulla</option></select></label>
+        </div>
+
+        <div class="grup">Colors</div>
+        <div class="fila">
+          <label class="mini">Codi <input type="color" id="op-color"></label>
+          <label class="mini"><input type="checkbox" id="op-ambDegradat"> Degradat <input type="color" id="op-color2"></label>
+          <label class="mini"><input type="checkbox" id="op-ambUlls"> Ulls <input type="color" id="op-ulls"></label>
+          <label class="mini">Fons <input type="color" id="op-fons"></label>
+        </div>
+        <p class="ajuda petit avis-colors" id="op-avis-colors" hidden></p>
+
+        <div class="grup">Marc amb text</div>
+        <div class="fila">
+          <select id="op-marc" class="estret"><option value="cap">Sense marc</option><option value="text">Text a sota</option></select>
+          <input id="op-marcText" maxlength="28" placeholder="ESCANEJA'M">
+          <input type="color" id="op-marcColor" title="Color del marc">
+        </div>
+
+        <details class="avancat"><summary>Avançat</summary>
+          <label class="mini rang">Marge blanc <input type="range" id="op-marge" min="1" max="8" step="1"> <span id="op-marge-v"></span></label>
+          <label class="mini">Correcció d'errors
+            <select id="op-nivell"><option value="auto">Automàtica</option><option value="L">L · 7% (codi més petit)</option><option value="M">M · 15%</option><option value="Q">Q · 25%</option><option value="H">H · 30% (més resistent)</option></select></label>
+        </details>
+        <div class="botons">
+          <button type="button" class="b sec petit" id="op-reset">↺ Aspecte inicial</button>
+          <button type="button" class="b sec petit" id="op-predet">📌 Fes-lo servir per als QR nous</button>
+        </div>
+      </details>
+      <details class="opcions" id="ed-opcions">
+        <summary>🔐 Seguretat</summary>
+        <label class="check"><input type="checkbox" id="op-xifra"> 🔐 Protegeix amb frase secreta (només s'obre amb Xoriguer QR)</label>
+        <div id="op-xifra-camps" hidden>
+          <input type="password" id="op-frase" placeholder="Frase secreta" autocomplete="new-password">
+          <input type="password" id="op-frase2" placeholder="Repeteix-la" autocomplete="new-password">
+          <p class="ajuda petit">No es desa enlloc. Si l'oblides, el QR no es podrà obrir.</p>
+        </div>
+      </details>
+    </form>
+    <aside class="ed-vista">
+      <div class="qr-marc"><canvas id="qr" width="600" height="600"></canvas><div class="qr-buit" id="qr-buit">Omple les dades</div></div>
+      <p class="qr-info" id="qr-info"></p>
+      <details class="qr-contingut"><summary>Què hi ha dins el QR</summary><pre id="qr-text"></pre></details>
+      <div class="botons ed-accions">
+        <button class="b" id="ac-desa">⭐ Desa</button>
+        <button class="b sec" id="ac-png">⬇️ PNG</button>
+        <button class="b sec" id="ac-svg" title="Vectorial: per a impremta i cartells">⬇️ SVG</button>
+        <button class="b sec" id="ac-comparteix">📤 Comparteix</button>
+      </div>
+      <div class="botons ed-accions" id="ac-targetes"></div>
+      <button class="b sec" id="ac-desa-fitxa" hidden>🗂️ Desa aquests camps com a fitxa meva</button>
+    </aside>
+  </div>
+</div>
+
+<!-- VISTA PRÈVIA DE TARGETA / IMPRESSIÓ -->
+<div class="modal" id="modal" hidden>
+  <div class="modal-caixa">
+    <h3 id="modal-titol"></h3>
+    <div id="modal-cos"></div>
+    <div class="botons" id="modal-botons"></div>
+  </div>
+</div>
+<div class="avis" id="avis" role="status" hidden></div>
+<div id="impressio"></div>
+
+<script src="vendor/qrcode.js"></script>
+<script src="vendor/jsQR.js"></script>
+<script src="js/fitxes.js"></script>
+<script src="js/dibuix.js"></script>
+<script src="js/cripto.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
