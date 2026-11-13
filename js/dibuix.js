@@ -222,8 +222,8 @@
     const ratio = c => { const l = lum(c); return (Math.max(l, fons) + 0.05) / (Math.min(l, fons) + 0.05); };
     const codi = Math.min(...[o.color, o.color2].filter(Boolean).map(ratio));
     const ulls = o.ulls ? ratio(o.ulls) : 99;
-    if ([o.color, o.color2].filter(Boolean).some(c => lum(c) > fons)) return 'Colors invertits (clar sobre fosc): molts lectors no el llegeixen.';
-    if (codi < 3.5 || ulls < 2.5) return 'Poc contrast entre el codi i el fons: pot costar de llegir.';
+    if ([o.color, o.color2].filter(Boolean).some(c => lum(c) > fons)) return (window.T || String)('Colors invertits (clar sobre fosc): molts lectors no el llegeixen.');
+    if (codi < 3.5 || ulls < 2.5) return (window.T || String)('Poc contrast entre el codi i el fons: pot costar de llegir.');
     return '';
   }
   /** Llegeix un QR d'una imatge com fan els mòbils: prova diverses mides i un lleuger desenfocament

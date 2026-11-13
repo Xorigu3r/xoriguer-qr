@@ -1,8 +1,9 @@
 // XORIGUER QR · aplicació
 'use strict';
 (function () {
-const VERSIO = '1.1.0';
-const { FITXES, codificaPersonal, dataLocal } = window.XQR_FITXES;
+const VERSIO = '1.2.0';
+const { FITXES, codificaPersonal, dataLocal, TXT } = window.XQR_FITXES;
+const T = window.T, LANG = window.XQR_IDIOMA.L;
 const C = window.XQR_CRIPTO;
 const $ = s => document.querySelector(s);
 const el = (tag, at = {}, ...fills) => {
@@ -22,9 +23,9 @@ const ESCRIPTORI = /Electron/.test(navigator.userAgent);
 
 // ------------------------------------------------------------------ dades
 const CLAU = 'xoriguer-qr';
-let E = { items: [], fitxesMeves: [], persones: ['Jo'], ultimaCopia: null };
+let E = { items: [], fitxesMeves: [], persones: [T('Jo')], ultimaCopia: null };
 try { Object.assign(E, JSON.parse(localStorage.getItem(CLAU) || '{}')); } catch (e) { /* començar de nou */ }
-const desa = () => { try { localStorage.setItem(CLAU, JSON.stringify(E)); } catch (e) { avis('No s\'ha pogut desar (memòria plena?)'); } };
+const desa = () => { try { localStorage.setItem(CLAU, JSON.stringify(E)); } catch (e) { avis(T("No s'ha pogut desar (memòria plena?)")); } };
 
 function avis(t, ms = 2600) {
   const a = $('#avis');
@@ -35,7 +36,7 @@ function avis(t, ms = 2600) {
 // ------------------------------------------------------------------ dibuix del QR (motor a dibuix.js)
 const D = window.XQR_DIBUIX;
 E.logos = E.logos || [];
-const LOGO_FALCO = { id: 'falco', nom: 'Falcó Xoriguer', src: 'icons/falco.png', fons: '#0A0B0E' };
+const LOGO_FALCO = { id: 'falco', nom: T('Falcó Xoriguer'), src: 'icons/falco.png', fons: '#0A0B0E' };
 const totsLogos = () => [LOGO_FALCO, ...E.logos];
 const imatges = new Map();
 function imatgeLogo(id) {
@@ -86,7 +87,7 @@ function targetaFitxa(f, obre, treu) {
   return el('button', { class: 'fitxa', style: `--c:${f.color || '#FFA82E'}`, onclick: obre },
     el('span', { class: 'ic', text: f.icona || '🗂️' }),
     el('span', {}, el('b', { text: f.nom }), el('small', { text: f.desc || '' })),
-    treu ? el('span', { class: 'treu', title: 'Esborra la fitxa', role: 'button',
+    treu ? el('span', { class: 'treu', title: T('Esborra la fitxa'), role: 'button',
       onclick: ev => { ev.stopPropagation(); treu(); } }, '✕') : null);
 }
 function pintaFitxes() {
@@ -95,7 +96,7 @@ function pintaFitxes() {
   $('#llista-fitxes-meves').replaceChildren(...E.fitxesMeves.map(f => targetaFitxa(
     { ...f, desc: f.camps.join(' · '), color: '#FFA82E' },
     () => obreEditor({ fitxa: 'personal', plantilla: f }),
-    () => { if (confirm(`Esborrar la fitxa «${f.nom}»? (els QR ja desats no s'esborren)`)) { E.fitxesMeves = E.fitxesMeves.filter(x => x !== f); desa(); pintaFitxes(); } })));
+    () => { if (confirm(T("Esborrar la fitxa «{n}»? (els QR ja desats no s'esborren)", { n: f.nom }))) { E.fitxesMeves = E.fitxesMeves.filter(x => x !== f); desa(); pintaFitxes(); } })));
 }
 $('#nou-personal').onclick = () => obreEditor({ fitxa: 'personal' });
 
@@ -114,7 +115,7 @@ function obreEditor({ fitxa, plantilla, item, dades, frase }) {
   } else {
     ed.dades = dades || Object.fromEntries(f.camps.filter(c => c.val !== undefined).map(c => [c.k, c.val]));
   }
-  $('#ed-titol').textContent = f ? `${f.icona} ${f.nom}` : (plantilla ? `${plantilla.icona || '✏️'} ${plantilla.nom}` : '✏️ Personalitzat');
+  $('#ed-titol').textContent = f ? `${f.icona} ${f.nom}` : (plantilla ? `${plantilla.icona || '✏️'} ${plantilla.nom}` : '✏️ ' + T('Personalitzat'));
   $('#ed-nom').value = item?.nom || '';
   $('#ed-nom').dataset.auto = item ? '' : '1';
   omplePersones($('#ed-persona'), item?.persona ?? '');
@@ -162,7 +163,7 @@ function pintaCamps(f) {
     const camp = el('div', { class: 'camp' + (c.mig ? ' mig' : '') + (c.curt ? ' curt' : '') }, el('label', { for: id, text: c.label }));
     if (c.tipus === 'password') {
       camp.append(el('div', { class: 'fila' }, inp, el('button', { type: 'button', class: 'b sec petit', text: '👁',
-        title: 'Mostra / amaga', onclick: () => { inp.type = inp.type === 'password' ? 'text' : 'password'; } })));
+        title: T('Mostra / amaga'), onclick: () => { inp.type = inp.type === 'password' ? 'text' : 'password'; } })));
     } else camp.append(inp);
     cont.append(camp);
   }
@@ -170,54 +171,54 @@ function pintaCamps(f) {
 }
 
 const SUGGERITS = ['Nom', 'Telèfon', 'Adreça', 'Correu', 'Al·lèrgies', 'Grup sanguini', 'Medicació', 'Contacte d\'emergència',
-  'Matrícula', 'Núm. de soci', 'Web', 'Horari', 'Notes'];
+  'Matrícula', 'Núm. de soci', 'Web', 'Horari', 'Notes'].map(s => T(s));
 
 function pintaPersonal() {
   const d = ed.dades;
   const files = el('div', {});
   d.camps.forEach((c, i) => {
-    const lab = el('input', { placeholder: 'Nom del camp', value: c.label, 'aria-label': 'Nom del camp' });
-    const val = el('textarea', { class: 'valor', rows: 1, placeholder: 'Valor', 'aria-label': 'Valor' });
+    const lab = el('input', { placeholder: T('Nom del camp'), value: c.label, 'aria-label': T('Nom del camp') });
+    const val = el('textarea', { class: 'valor', rows: 1, placeholder: T('Valor'), 'aria-label': T('Valor') });
     val.value = c.valor;
     lab.oninput = () => { c.label = lab.value; regenera(); };
     val.oninput = () => { c.valor = val.value; regenera(); };
     files.append(el('div', { class: 'pcamp' },
-      el('button', { type: 'button', class: 'mou', title: 'Puja / baixa', onclick: ev => {
+      el('button', { type: 'button', class: 'mou', title: T('Puja / baixa'), onclick: ev => {
         const amunt = ev.offsetY < ev.currentTarget.offsetHeight / 2;
         const j = amunt ? i - 1 : i + 1;
         if (j < 0 || j >= d.camps.length) return;
         [d.camps[i], d.camps[j]] = [d.camps[j], d.camps[i]]; pintaPersonal(); regenera();
       } }, el('span', { text: '▲' }), el('span', { text: '▼' })),
       lab, val,
-      el('button', { type: 'button', class: 'treu', title: 'Treu el camp', text: '✕',
+      el('button', { type: 'button', class: 'treu', title: T('Treu el camp'), text: '✕',
         onclick: () => { d.camps.splice(i, 1); pintaPersonal(); regenera(); } })));
   });
-  const cap = el('input', { id: 'p-cap', placeholder: 'p. ex. DADES DE L\'AVI', value: d.capcalera || '' });
+  const cap = el('input', { id: 'p-cap', placeholder: T("p. ex. DADES DE L'AVI"), value: d.capcalera || '' });
   cap.oninput = () => { d.capcalera = cap.value; regenera(); };
   const fmt = el('select', { id: 'p-fmt' },
-    el('option', { value: 'text', text: 'Text (es llegeix amb qualsevol mòbil)', selected: d.format !== 'json' }),
-    el('option', { value: 'json', text: 'JSON (per a programes)', selected: d.format === 'json' }));
+    el('option', { value: 'text', text: T('Text (es llegeix amb qualsevol mòbil)'), selected: d.format !== 'json' }),
+    el('option', { value: 'json', text: T('JSON (per a programes)'), selected: d.format === 'json' }));
   fmt.onchange = () => { d.format = fmt.value; regenera(); };
   $('#ed-camps').replaceChildren(
-    el('div', { class: 'camp' }, el('label', { for: 'p-cap', text: 'Capçalera (primera línia, opcional)' }), cap),
-    el('div', { class: 'grup', text: 'Camps' }), files,
-    el('div', { class: 'botons' }, el('button', { type: 'button', class: 'b sec', text: '➕ Afegeix un camp',
+    el('div', { class: 'camp' }, el('label', { for: 'p-cap', text: T('Capçalera (primera línia, opcional)') }), cap),
+    el('div', { class: 'grup', text: T('Camps') }), files,
+    el('div', { class: 'botons' }, el('button', { type: 'button', class: 'b sec', text: T('➕ Afegeix un camp'),
       onclick: () => { d.camps.push({ label: '', valor: '' }); pintaPersonal(); files.lastElementChild; } })),
     el('div', { class: 'xips' }, SUGGERITS.map(s => el('button', { type: 'button', class: 'etq', text: '+ ' + s,
       onclick: () => { d.camps.push({ label: s, valor: '' }); pintaPersonal(); regenera(); } }))),
-    el('div', { class: 'camp' }, el('label', { for: 'p-fmt', text: 'Format' }), fmt));
+    el('div', { class: 'camp' }, el('label', { for: 'p-fmt', text: T('Format') }), fmt));
 }
 
 $('#ac-desa-fitxa').onclick = () => {
   const camps = ed.dades.camps.map(c => c.label.trim()).filter(Boolean);
-  if (!camps.length) return avis('Posa nom als camps primer');
-  demana('Desa com a fitxa meva', [
-    { id: 'nom', label: 'Nom de la fitxa', val: ed.dades.capcalera || '' },
-    { id: 'icona', label: 'Icona (un emoji)', val: '🗂️' },
+  if (!camps.length) return avis(T('Posa nom als camps primer'));
+  demana(T('Desa com a fitxa meva'), [
+    { id: 'nom', label: T('Nom de la fitxa'), val: ed.dades.capcalera || '' },
+    { id: 'icona', label: T('Icona (un emoji)'), val: '🗂️' },
   ], v => {
     if (!v.nom.trim()) return false;
     E.fitxesMeves.push({ id: 'u_' + uid(), nom: v.nom.trim(), icona: v.icona.trim() || '🗂️', camps });
-    desa(); pintaFitxes(); avis('Fitxa desada a «Fitxes → Les meves fitxes»');
+    desa(); pintaFitxes(); avis(T('Fitxa desada a «Fitxes → Les meves fitxes»'));
   });
 };
 
@@ -225,6 +226,7 @@ $('#ac-desa-fitxa').onclick = () => {
 // ------------------------------------------------------------------ aspecte i logo
 const CAMPS_OP = ['color', 'fons', 'punts', 'formaUlls', 'marge', 'nivell', 'logoMida', 'logoPlaca', 'logoFons', 'marc', 'marcText', 'marcColor'];
 let logoTriat = '';
+if (D.PER_DEFECTE) D.PER_DEFECTE.marcText = T("ESCANEJA'M");
 const ESTILS = [
   { nom: 'Clàssic', o: { color: '#000000', color2: '', ulls: '', fons: '#FFFFFF', punts: 'quadrat', formaUlls: 'quadrat' } },
   { nom: 'Xoriguer', o: { color: '#0A0B0E', color2: '', ulls: '#F2650F', fons: '#FFFFFF', punts: 'arrodonit', formaUlls: 'arrodonit' } },
@@ -266,15 +268,15 @@ function pintaLogos() {
       if (l) $('#op-logoFons').value = l.fons || $('#op-fons').value;
       pintaLogos(); etiquetesRang(); regenera();
     } }, contingut,
-    treu ? el('span', { class: 'treu', title: 'Esborra el logo', role: 'button', text: '✕', onclick: ev => {
+    treu ? el('span', { class: 'treu', title: T('Esborra el logo'), role: 'button', text: '✕', onclick: ev => {
       ev.stopPropagation();
-      if (!confirm(`Esborrar el logo «${treu.nom}»? Els QR que el fan servir es quedaran sense logo.`)) return;
+      if (!confirm(T('Esborrar el logo «{n}»? Els QR que el fan servir es quedaran sense logo.', { n: treu.nom }))) return;
       E.logos = E.logos.filter(x => x !== treu); imatges.delete(treu.id);
       if (logoTriat === treu.id) logoTriat = '';
       desa(); pintaLogos(); etiquetesRang(); regenera();
     } }) : null);
   $('#op-logos').replaceChildren(
-    boto('', el('span', { class: 'sense', text: 'Cap' }), 'Sense logo'),
+    boto('', el('span', { class: 'sense', text: T('Cap') }), T('Sense logo')),
     ...totsLogos().map(l => boto(l.id, el('img', { src: l.src, alt: l.nom, style: l.fons ? `background:${l.fons}` : '' }), l.nom, l.id === 'falco' ? null : l)));
 }
 $('#op-puja-logo').onchange = async e => {
@@ -297,16 +299,16 @@ $('#op-puja-logo').onchange = async e => {
     E.logos.push(l); desa();
     logoTriat = l.id; $('#op-logoFons').value = $('#op-fons').value;
     pintaLogos(); etiquetesRang(); regenera();
-    avis('Logo afegit. Es queda desat per a altres QR.');
-  } catch (err) { avis('No he pogut llegir aquesta imatge', 3000); }
+    avis(T('Logo afegit. Es queda desat per a altres QR.'));
+  } catch (err) { avis(T('No he pogut llegir aquesta imatge'), 3000); }
 };
-$('#op-estils').replaceChildren(...ESTILS.map(es => el('button', { type: 'button', class: 'etq estil', text: es.nom,
+$('#op-estils').replaceChildren(...ESTILS.map(es => el('button', { type: 'button', class: 'etq estil', text: T(es.nom),
   onclick: () => { posaAspecte({ ...llegeixAspecte(), ...es.o, logoFons: '', marcColor: '' }); regenera(); } })));
 ['op-color', 'op-fons', 'op-color2', 'op-ulls', 'op-punts', 'op-formaUlls', 'op-marge', 'op-nivell', 'op-logoMida', 'op-logoPlaca',
   'op-logoFons', 'op-marc', 'op-marcText', 'op-marcColor', 'op-ambDegradat', 'op-ambUlls']
   .forEach(id => $('#' + id).addEventListener('input', () => { etiquetesRang(); regenera(); }));
 $('#op-reset').onclick = () => { posaAspecte({}); regenera(); };
-$('#op-predet').onclick = () => { E.estil = llegeixAspecte(); desa(); avis('Els QR nous tindran aquest aspecte'); };
+$('#op-predet').onclick = () => { E.estil = llegeixAspecte(); desa(); avis(T('Els QR nous tindran aquest aspecte')); };
 $('#op-xifra').onchange = () => { $('#op-xifra-camps').hidden = !$('#op-xifra').checked; regenera(); };
 ['op-frase', 'op-frase2'].forEach(id => $('#' + id).addEventListener('input', regenera));
 $('#ed-nom').addEventListener('input', () => { $('#ed-nom').dataset.auto = $('#ed-nom').value ? '' : '1'; });
@@ -316,7 +318,7 @@ function textPla() {
   return fitxaDe(ed.fitxa).codifica(ed.dades);
 }
 function titolAuto() {
-  if (ed.fitxa === 'personal') return ed.dades.capcalera || ed.dades.camps.find(c => c.valor)?.valor?.slice(0, 30) || 'QR personalitzat';
+  if (ed.fitxa === 'personal') return ed.dades.capcalera || ed.dades.camps.find(c => c.valor)?.valor?.slice(0, 30) || T('QR personalitzat');
   return fitxaDe(ed.fitxa).titol(ed.dades);
 }
 const op = () => ({ ...llegeixAspecte(), xifra: $('#op-xifra').checked });
@@ -337,9 +339,9 @@ async function regenera() {
   const o = op();
   if (o.xifra) {
     const f1 = $('#op-frase').value, f2 = $('#op-frase2').value;
-    if (!C.disponible) { info.textContent = 'Aquest navegador no pot xifrar.'; info.classList.add('mal'); return; }
-    if (f1.length < 6) { mostraBuit('Posa una frase secreta (mínim 6 caràcters) a «Aspecte i seguretat»'); return; }
-    if (f1 !== f2) { mostraBuit('Les dues frases secretes no coincideixen'); return; }
+    if (!C.disponible) { info.textContent = T('Aquest navegador no pot xifrar.'); info.classList.add('mal'); return; }
+    if (f1.length < 6) { mostraBuit(T('Posa una frase secreta (mínim 6 caràcters) a «Seguretat»')); return; }
+    if (f1 !== f2) { mostraBuit(T('Les dues frases secretes no coincideixen')); return; }
     await new Promise(r => setTimeout(r, 250));
     if (meu !== torn) return;
     text = await C.xifra(text, f1);
@@ -352,20 +354,20 @@ async function regenera() {
   $('.qr-marc').style.background = o.fons;
   $('#qr-buit').hidden = !!r;
   $('#qr-text').textContent = text;
-  if (!r) { info.textContent = 'Massa dades per a un QR: treu text.'; info.classList.add('mal'); botons(false); return; }
+  if (!r) { info.textContent = T('Massa dades per a un QR: treu text.'); info.classList.add('mal'); botons(false); return; }
   const avisC = D.avisColors(o);
   $('#op-avis-colors').hidden = !avisC; $('#op-avis-colors').textContent = '⚠️ ' + avisC;
-  const base = `${text.length} caràcters · versió ${r.versio} · correcció ${r.nivell}` + (o.xifra ? ' · 🔐 xifrat' : '');
-  info.textContent = base + ' · comprovant…';
+  const base = T('{n} caràcters · versió {v} · correcció {c}', { n: text.length, v: r.versio, c: r.nivell }) + (o.xifra ? ' · ' + T('🔐 xifrat') : '');
+  info.textContent = base + ' · ' + T('comprovant…');
   botons(true);
   // prova de lectura, com faria un mòbil amb una foto petita
   setTimeout(() => {
     if (meu !== torn) return;
     const ok = D.provaLectura(cv, text);
     if (ok === false) {
-      info.textContent = base + ' · ⚠️ costa de llegir: fes el logo més petit, posa més contrast o puja la correcció d\'errors';
+      info.textContent = base + ' · ' + T("⚠️ costa de llegir: fes el logo més petit, posa més contrast o puja la correcció d'errors");
       info.classList.add('mal');
-    } else info.textContent = base + (ok ? ' · ✅ es llegeix bé' : '') + (r.versio > 15 ? ' · és dens: imprimeix-lo gran' : '');
+    } else info.textContent = base + (ok ? ' · ' + T('✅ es llegeix bé') : '') + (r.versio > 15 ? ' · ' + T('és dens: imprimeix-lo gran') : '');
   }, 60);
 }
 function mostraBuit(t) {
@@ -373,7 +375,7 @@ function mostraBuit(t) {
   $('#qr-info').textContent = '';
 }
 function botons(ok) {
-  if (ok) $('#qr-buit').textContent = 'Omple les dades';
+  if (ok) $('#qr-buit').textContent = T('Omple les dades');
   document.querySelectorAll('.ed-accions .b').forEach(b => { b.disabled = !ok; });
 }
 
@@ -390,16 +392,16 @@ $('#ac-desa').onclick = async () => {
   if (!ed.item) E.items.unshift(it);
   ed.item = it;
   desa();
-  avis('Desat a «Els meus»');
+  avis(T('Desat a «Els meus»'));
 };
 
 function obreItem(it) {
   if (it.dadesX) {
-    demana('🔐 QR protegit', [{ id: 'f', label: 'Frase secreta', tipus: 'password' }], async v => {
+    demana(T('🔐 QR protegit'), [{ id: 'f', label: T('Frase secreta'), tipus: 'password' }], async v => {
       try {
         const dades = JSON.parse(await C.desxifra(it.dadesX, v.f));
         obreEditor({ fitxa: it.fitxa, item: it, dades, frase: v.f });
-      } catch (e) { avis('Frase incorrecta'); return false; }
+      } catch (e) { avis(T('Frase incorrecta')); return false; }
     });
     return;
   }
@@ -415,7 +417,7 @@ function baixa(blob, nom) {
   const a = el('a', { href: u, download: nom });
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(u), 30000);
-  if (!ANDROID) avis('Desat: ' + nom);
+  if (!ANDROID) avis(T('Desat: {n}', { n: nom }));
 }
 async function comparteix(blob, nom, titol) {
   const f = new File([blob], nom, { type: 'image/png' });
@@ -445,15 +447,16 @@ $('#ac-comparteix').onclick = async () => comparteix(await aBlob(qrGran()), nomF
 
 // ------------------------------------------------------------------ targetes i fons de pantalla
 const TARGETES = {
-  fons: { nom: '📱 Fons de pantalla', desc: 'Per a la pantalla de bloqueig del mòbil: els sanitaris el veuen sense desbloquejar-lo.' },
-  adhesiu: { nom: '🏷️ Adhesiu', desc: 'Per al casc, la cartera, el cotxe, la nevera… (10×12 cm).' },
-  targeta: { nom: '💳 Targeta', desc: 'Mida targeta de crèdit (85×54 mm), per imprimir i portar a la cartera.' },
+  fons: { nom: T('📱 Fons de pantalla'), desc: T('Per a la pantalla de bloqueig del mòbil: els sanitaris el veuen sense desbloquejar-lo.') },
+  adhesiu: { nom: T('🏷️ Adhesiu'), desc: T('Per al casc, la cartera, el cotxe, la nevera… (10×12 cm).') },
+  targeta: { nom: T('💳 Targeta'), desc: T('Mida targeta de crèdit (85×54 mm), per imprimir i portar a la cartera.') },
 };
 function pintaBotonsTargeta(f) {
   const tipus = f?.targetes || ['targeta', 'adhesiu'];
   $('#ac-targetes').replaceChildren(...tipus.map(t => el('button', { class: 'b sec', text: TARGETES[t].nom, onclick: () => fesTargeta(t) })));
 }
 const esEmerg = () => ed.fitxa === 'emergencia' || ed.fitxa === 'medica';
+const txtE = () => TXT[ed.dades.idioma] || TXT[LANG] || TXT.ca;
 const fontT = px => `800 ${px}px Montserrat, "Segoe UI", sans-serif`;
 const fontX = (px, w = 600) => `${w} ${px}px "Segoe UI", Roboto, system-ui, sans-serif`;
 
@@ -492,7 +495,8 @@ function resumEmergencia() {
   const d = ed.dades, l = [];
   if (d.nom) l.push(d.nom);
   if (d.sang) l.push('🩸 ' + d.sang);
-  l.push('⚠️ Al·lèrgies: ' + (d.alerg?.trim() || 'cap de coneguda'));
+  const t = txtE();
+  l.push(`⚠️ ${t.alerg}: ` + (d.alerg?.trim() || t.cap_al));
   const ice = [1, 2, 3].map(i => d['ice' + i + '_tlf'] && `${d['ice' + i + '_nom'] || ''} ${d['ice' + i + '_tlf']}`.trim()).filter(Boolean);
   if (ice.length) l.push('📞 ' + ice.slice(0, 2).join(' · '));
   return l;
@@ -513,13 +517,13 @@ async function fesTargeta(tipus) {
     const y0 = 980;
     x.fillStyle = '#E5484D'; arrod(x, 90, y0 - 150, W - 180, 120, 30); x.fill();
     x.fillStyle = '#fff'; x.font = fontT(62); x.textAlign = 'center';
-    x.fillText(emerg ? '🆘 EMERGÈNCIA · ICE' : nom, W / 2, y0 - 68);
+    x.fillText(emerg ? '🆘 ' + txtE().cap : nom, W / 2, y0 - 68);
     const q = 640, qx = (W - q) / 2, qy = y0 + 10;
     x.fillStyle = '#fff'; arrod(x, qx - 30, qy - 30, q + 60, q + 60, 40); x.fill();
     dibuixaQR(qr, ed.qr, o, q);
     x.drawImage(qr, qx, qy);
     x.fillStyle = '#F6EFE2'; x.font = fontX(44);
-    let y = escriu(x, emerg ? 'En cas d\'accident, escanegeu aquest codi' : 'Escaneja el codi', W / 2, qy + q + 110, W - 200, 56, 2);
+    let y = escriu(x, emerg ? txtE().cas : T('Escaneja el codi'), W / 2, qy + q + 110, W - 200, 56, 2);
     if (emerg) {
       x.font = fontX(46, 700);
       for (const l of resumEmergencia()) y = escriu(x, l, W / 2, y + 22, W - 180, 58, 2);
@@ -530,12 +534,12 @@ async function fesTargeta(tipus) {
     x.fillStyle = '#fff'; arrod(x, 0, 0, W, H, 60); x.fill();
     x.fillStyle = emerg ? '#E5484D' : '#0A0B0E'; arrod(x, 0, 0, W, 230, 60); x.fill(); x.fillRect(0, 150, W, 80);
     x.fillStyle = '#fff'; x.font = fontT(emerg ? 86 : 70); x.textAlign = 'center';
-    escriu(x, emerg ? '🆘 EMERGÈNCIA' : nom, W / 2, 148, W - 80, 80, 1);
+    escriu(x, emerg ? '🆘 ' + txtE().emerg : nom, W / 2, 148, W - 80, 80, 1);
     const q = 860;
     dibuixaQR(qr, ed.qr, o, q);
     x.drawImage(qr, (W - q) / 2, 270);
     x.fillStyle = '#0A0B0E'; x.font = fontX(52, 700);
-    escriu(x, emerg ? 'Escanegeu-me · Scan me' : 'Escaneja\'m', W / 2, 1210, W - 100, 60, 1);
+    escriu(x, emerg ? txtE().scan : T("Escaneja'm"), W / 2, 1210, W - 100, 60, 1);
     x.fillStyle = '#555'; x.font = fontX(42);
     escriu(x, emerg ? (ed.dades.nom || '') : '', W / 2, 1290, W - 100, 50, 1);
     x.fillStyle = '#F2650F'; x.font = fontT(34);
@@ -550,7 +554,7 @@ async function fesTargeta(tipus) {
     x.drawImage(qr, 40, (H - q) / 2 + 8);
     const tx = 540, tw = W - tx - 36;
     x.fillStyle = emerg ? '#E5484D' : '#0A0B0E'; x.font = fontT(46);
-    let y = escriu(x, emerg ? '🆘 EMERGÈNCIA' : nom, tx, 120, tw, 54, 2, 'left');
+    let y = escriu(x, emerg ? '🆘 ' + txtE().emerg : nom, tx, 120, tw, 54, 2, 'left');
     x.fillStyle = '#333'; x.font = fontX(30);
     const linies = emerg ? resumEmergencia() : resumGeneric();
     for (const l of linies) y = escriu(x, l, tx, y + 18, tw, 38, 2, 'left');
@@ -562,11 +566,11 @@ async function fesTargeta(tipus) {
 function resumGeneric() {
   const d = ed.dades, f = ed.fitxa;
   if (f === 'personal') return d.camps.filter(c => c.valor && !/contrasenya|clau|pin/i.test(c.label)).slice(0, 4).map(c => (c.label ? c.label + ': ' : '') + c.valor);
-  if (f === 'clau') return ['🔐 Protegit amb frase secreta', 'Obre\'l amb Xoriguer QR'];
-  if (f === 'wifi') return ['Escaneja per connectar-te', d.ssid ? 'Xarxa: ' + d.ssid : ''].filter(Boolean);
+  if (f === 'clau') return [T('🔐 Protegit amb frase secreta'), T("Obre'l amb Xoriguer QR")];
+  if (f === 'wifi') return [T('Escaneja per connectar-te'), d.ssid ? T('Xarxa') + ': ' + d.ssid : ''].filter(Boolean);
   if (f === 'contacte' || f === 'negoci') return [d.carrec, d.mobil || d.telefon, d.email, d.web].filter(Boolean).slice(0, 4);
   if (f === 'adreca') return [d.adreca].filter(Boolean);
-  return op().xifra ? ['🔐 Obre\'l amb Xoriguer QR'] : ['Escaneja el codi'];
+  return op().xifra ? [T("🔐 Obre'l amb Xoriguer QR")] : [T('Escaneja el codi')];
 }
 
 function previsualitza(cv, tipus, nom) {
@@ -574,10 +578,10 @@ function previsualitza(cv, tipus, nom) {
   $('#modal-titol').textContent = TARGETES[tipus].nom;
   $('#modal-cos').replaceChildren(el('img', { src: cv.toDataURL('image/png'), alt: '' }), el('p', { class: 'ajuda', text: TARGETES[tipus].desc }));
   $('#modal-botons').replaceChildren(
-    el('button', { class: 'b', text: '⬇️ Desa la imatge', onclick: async () => baixa(await aBlob(cv), fitxer) }),
-    el('button', { class: 'b sec', text: '📤 Comparteix', onclick: async () => comparteix(await aBlob(cv), fitxer, nom) }),
-    ANDROID ? null : el('button', { class: 'b sec', text: '🖨️ Imprimeix', onclick: () => imprimeix(cv) }),
-    el('button', { class: 'b sec', text: 'Tanca', onclick: tancaModal }));
+    el('button', { class: 'b', text: T('⬇️ Desa la imatge'), onclick: async () => baixa(await aBlob(cv), fitxer) }),
+    el('button', { class: 'b sec', text: T('📤 Comparteix'), onclick: async () => comparteix(await aBlob(cv), fitxer, nom) }),
+    ANDROID ? null : el('button', { class: 'b sec', text: T('🖨️ Imprimeix'), onclick: () => imprimeix(cv) }),
+    el('button', { class: 'b sec', text: T('Tanca'), onclick: tancaModal }));
   $('#modal').hidden = false;
 }
 function tancaModal() { $('#modal').hidden = true; }
@@ -597,47 +601,51 @@ function demana(titol, camps, fes) {
   };
   ins.forEach(([, i]) => i.addEventListener('keydown', e => { if (e.key === 'Enter') ok(); }));
   $('#modal-cos').replaceChildren(...ins.map(([c, i]) => el('div', { class: 'camp' }, el('label', { text: c.label }), i)));
-  $('#modal-botons').replaceChildren(el('button', { class: 'b', text: 'D\'acord', onclick: ok }),
-    el('button', { class: 'b sec', text: 'Cancel·la', onclick: tancaModal }));
+  $('#modal-botons').replaceChildren(el('button', { class: 'b', text: T("D'acord"), onclick: ok }),
+    el('button', { class: 'b sec', text: T('Cancel·la'), onclick: tancaModal }));
   $('#modal').hidden = false;
   setTimeout(() => ins[0]?.[1].focus(), 50);
 }
 
 function ubicacio() {
-  if (!navigator.geolocation) return avis('Aquest aparell no dona la ubicació');
-  avis('Buscant la ubicació…', 8000);
+  if (!navigator.geolocation) return avis(T('Aquest aparell no dona la ubicació'));
+  avis(T('Buscant la ubicació…'), 8000);
   navigator.geolocation.getCurrentPosition(p => {
     ed.dades.lat = p.coords.latitude.toFixed(6); ed.dades.lon = p.coords.longitude.toFixed(6);
     $('#c-lat').value = ed.dades.lat; $('#c-lon').value = ed.dades.lon;
-    regenera(); avis('Ubicació posada');
-  }, () => avis('No s\'ha pogut obtenir la ubicació'), { enableHighAccuracy: true, timeout: 15000 });
+    regenera(); avis(T('Ubicació posada'));
+  }, () => avis(T("No s'ha pogut obtenir la ubicació")), { enableHighAccuracy: true, timeout: 15000 });
 }
 
 // ------------------------------------------------------------------ els meus
+function titolDe(it) {
+  const f = fitxaDe(it.fitxa);
+  return f ? `${f.icona} ${f.nom}` : (it.titolFitxa || '');
+}
 function omplePersones(sel, val) {
   sel.replaceChildren(el('option', { value: '', text: '—' }), ...E.persones.map(p => el('option', { value: p, text: p, selected: p === val })));
 }
 function pintaMeus() {
   const f = $('#filtre-persona'), fv = f.value;
-  f.replaceChildren(el('option', { value: '', text: 'Tota la família' }), ...E.persones.map(p => el('option', { value: p, text: p, selected: p === fv })));
+  f.replaceChildren(el('option', { value: '', text: T('Tota la família') }), ...E.persones.map(p => el('option', { value: p, text: p, selected: p === fv })));
   const q = $('#cerca').value.trim().toLowerCase();
-  const l = E.items.filter(it => (!fv || it.persona === fv) && (!q || (it.nom + ' ' + (it.titolFitxa || '')).toLowerCase().includes(q)));
+  const l = E.items.filter(it => (!fv || it.persona === fv) && (!q || (it.nom + ' ' + titolDe(it)).toLowerCase().includes(q)));
   $('#meus-buit').hidden = E.items.length > 0;
   $('#llista-meus').replaceChildren(...l.map(it => {
-    const cv = el('canvas', { width: 144, height: 144, title: 'Obre' });
+    const cv = el('canvas', { width: 144, height: 144, title: T('Obre') });
     dibuixaQR(cv, it.qr, it.op, 144);
     cv.onclick = () => obreItem(it);
     return el('div', { class: 'item' }, cv,
       el('div', { class: 'txt', onclick: () => obreItem(it) },
         el('b', { text: it.nom }),
-        el('small', {}, it.persona ? el('span', { class: 'etq', text: it.persona }) : null, it.dadesX && it.fitxa !== 'clau' ? '🔐 ' : '', it.titolFitxa || '')),
+        el('small', {}, it.persona ? el('span', { class: 'etq', text: it.persona }) : null, it.dadesX && it.fitxa !== 'clau' ? '🔐 ' : '', titolDe(it))),
       el('div', { class: 'acc' },
-        el('button', { title: 'Duplica', text: '⧉', onclick: () => {
-          const c = JSON.parse(JSON.stringify(it)); c.id = uid(); c.nom += ' (còpia)'; c.creat = c.mod = new Date().toISOString();
+        el('button', { title: T('Duplica'), text: '⧉', onclick: () => {
+          const c = JSON.parse(JSON.stringify(it)); c.id = uid(); c.nom += ' ' + T('(còpia)'); c.creat = c.mod = new Date().toISOString();
           E.items.unshift(c); desa(); pintaMeus();
         } }),
-        el('button', { title: 'Esborra', text: '🗑', onclick: () => {
-          if (confirm(`Esborrar «${it.nom}»?`)) { E.items = E.items.filter(x => x !== it); desa(); pintaMeus(); }
+        el('button', { title: T('Esborra'), text: '🗑', onclick: () => {
+          if (confirm(T('Esborrar «{n}»?', { n: it.nom }))) { E.items = E.items.filter(x => x !== it); desa(); pintaMeus(); }
         } })));
   }));
 }
@@ -648,10 +656,10 @@ $('#filtre-persona').onchange = pintaMeus;
 let flux = null, bucle = null;
 const cvLect = document.createElement('canvas');
 $('#obre-camera').onclick = async () => {
-  if (!navigator.mediaDevices?.getUserMedia) return avis('Aquest aparell no deixa fer servir la càmera aquí. Prova «Des d\'una imatge».', 4000);
+  if (!navigator.mediaDevices?.getUserMedia) return avis(T("Aquest aparell no deixa fer servir la càmera aquí. Prova «Des d'una imatge»."), 4000);
   try {
     flux = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false });
-  } catch (e) { return avis('No s\'ha pogut obrir la càmera (permís?)', 4000); }
+  } catch (e) { return avis(T("No s'ha pogut obrir la càmera (permís?)"), 4000); }
   const v = $('#video');
   v.srcObject = flux; await v.play();
   $('#camera').hidden = false; $('#resultat').hidden = true;
@@ -683,58 +691,58 @@ $('#llegeix-imatge').onchange = async e => {
   const img = await createImageBitmap(f);
   const t = D.llegeix(img, img.width, img.height, [Math.min(img.width, 1400), 900, 600, 400, 300, 220]);
   if (t) return interpreta(t);
-  avis('No hi he trobat cap QR', 3000);
+  avis(T('No hi he trobat cap QR'), 3000);
 };
 
 function interpreta(t) {
   const R = $('#resultat');
   R.hidden = false;
   const acc = [];
-  let tipus = 'Text', mostra = t;
-  const copia = el('button', { class: 'b sec', text: '📋 Copia', onclick: () => navigator.clipboard?.writeText(mostra).then(() => avis('Copiat')) });
+  let tipus = T('Text'), mostra = t;
+  const copia = el('button', { class: 'b sec', text: T('📋 Copia'), onclick: () => navigator.clipboard?.writeText(mostra).then(() => avis(T('Copiat'))) });
   if (C.esXifrat(t)) {
-    tipus = '🔐 Xifrat amb Xoriguer QR';
-    mostra = 'Aquest QR està protegit. Posa la frase secreta per veure\'l.';
-    acc.push(el('button', { class: 'b', text: '🔓 Obre amb la frase secreta', onclick: () => demana('🔐 Frase secreta', [{ id: 'f', label: 'Frase secreta', tipus: 'password' }], async v => {
-      try { interpreta(await C.desxifra(t, v.f)); R.querySelector('.tipus').textContent += ' (desxifrat)'; }
-      catch (e) { avis('Frase incorrecta'); return false; }
+    tipus = T('🔐 Xifrat amb Xoriguer QR');
+    mostra = T("Aquest QR està protegit. Posa la frase secreta per veure'l.");
+    acc.push(el('button', { class: 'b', text: T('🔓 Obre amb la frase secreta'), onclick: () => demana(T('🔐 Frase secreta'), [{ id: 'f', label: T('Frase secreta'), tipus: 'password' }], async v => {
+      try { interpreta(await C.desxifra(t, v.f)); R.querySelector('.tipus').textContent += ' ' + T('(desxifrat)'); }
+      catch (e) { avis(T('Frase incorrecta')); return false; }
     }) }));
   } else if (/^https?:\/\//i.test(t)) {
-    tipus = /google\.[a-z.]+\/maps/.test(t) ? '📍 Ubicació' : /wa\.me/.test(t) ? '💬 WhatsApp' : '🔗 Enllaç';
-    acc.push(el('a', { class: 'b', href: t, target: '_blank', rel: 'noopener', text: 'Obre' }));
+    tipus = /google\.[a-z.]+\/maps/.test(t) ? T('📍 Ubicació') : /wa\.me/.test(t) ? '💬 WhatsApp' : T('🔗 Enllaç');
+    acc.push(el('a', { class: 'b', href: t, target: '_blank', rel: 'noopener', text: T('Obre') }));
   } else if (/^tel:/i.test(t)) {
-    tipus = '📞 Telèfon'; acc.push(el('a', { class: 'b', href: t, text: 'Truca ' + t.slice(4) }));
+    tipus = T('📞 Telèfon'); acc.push(el('a', { class: 'b', href: t, text: T('Truca {n}', { n: t.slice(4) }) }));
   } else if (/^mailto:/i.test(t)) {
-    tipus = '📧 Correu'; acc.push(el('a', { class: 'b', href: t, text: 'Escriu' }));
+    tipus = T('📧 Correu'); acc.push(el('a', { class: 'b', href: t, text: T('Escriu') }));
   } else if (/^SMSTO:/i.test(t)) {
     const [, n, m] = t.match(/^SMSTO:([^:]*):?(.*)$/is) || [];
-    tipus = '✉️ SMS'; mostra = `${n}\n${m}`; acc.push(el('a', { class: 'b', href: `sms:${n}?body=${encodeURIComponent(m || '')}`, text: 'Envia' }));
+    tipus = '✉️ SMS'; mostra = `${n}\n${m}`; acc.push(el('a', { class: 'b', href: `sms:${n}?body=${encodeURIComponent(m || '')}`, text: T('Envia') }));
   } else if (/^WIFI:/i.test(t)) {
     const g = k => (t.match(new RegExp(`[:;]${k}:((?:\\\\.|[^;])*)`)) || [])[1]?.replace(/\\(.)/g, '$1') || '';
-    tipus = '📶 WiFi'; mostra = `Xarxa: ${g('S')}\nContrasenya: ${g('P') || '(cap)'}\nSeguretat: ${g('T')}`;
-    acc.push(el('button', { class: 'b', text: '📋 Copia la contrasenya', onclick: () => navigator.clipboard?.writeText(g('P')).then(() => avis('Copiada')) }));
+    tipus = '📶 WiFi'; mostra = `${T('Xarxa')}: ${g('S')}\n${T('Contrasenya')}: ${g('P') || T('(cap)')}\n${T('Seguretat')}: ${g('T')}`;
+    acc.push(el('button', { class: 'b', text: T('📋 Copia la contrasenya'), onclick: () => navigator.clipboard?.writeText(g('P')).then(() => avis(T('Copiada'))) }));
   } else if (/^BEGIN:VCARD/i.test(t)) {
-    tipus = '👤 Contacte';
+    tipus = T('👤 Contacte');
     mostra = t.split(/\r?\n/).filter(l => !/^(BEGIN|END|VERSION|N):/i.test(l))
-      .map(l => l.replace(/^([A-Z]+)[^:]*:/i, (m, k) => ({ FN: '', ORG: 'Empresa: ', TITLE: 'Càrrec: ', TEL: 'Tel: ', EMAIL: 'Correu: ', URL: 'Web: ', ADR: 'Adreça: ', NOTE: 'Nota: ' }[k.toUpperCase()] ?? k + ': '))
+      .map(l => l.replace(/^([A-Z]+)[^:]*:/i, (m, k) => ({ FN: '', ORG: T('Empresa') + ': ', TITLE: T('Càrrec') + ': ', TEL: T('Tel') + ': ', EMAIL: T('Correu') + ': ', URL: T('Web') + ': ', ADR: T('Adreça') + ': ', NOTE: T('Nota') + ': ' }[k.toUpperCase()] ?? k + ': '))
         .replace(/;+/g, ' ').replace(/\\([,;\\])/g, '$1').replace(/\\n/g, '\n').trim()).join('\n');
-    acc.push(el('button', { class: 'b', text: '💾 Desa el contacte (.vcf)', onclick: () => baixa(new Blob([t], { type: 'text/vcard' }), 'contacte.vcf') }));
+    acc.push(el('button', { class: 'b', text: T('💾 Desa el contacte (.vcf)'), onclick: () => baixa(new Blob([t], { type: 'text/vcard' }), 'contacte.vcf') }));
   } else if (/^BEGIN:VEVENT/i.test(t)) {
-    tipus = '📅 Esdeveniment';
-    acc.push(el('button', { class: 'b', text: '📅 Afegeix al calendari (.ics)', onclick: () => baixa(new Blob([
+    tipus = T('📅 Esdeveniment');
+    acc.push(el('button', { class: 'b', text: T('📅 Afegeix al calendari (.ics)'), onclick: () => baixa(new Blob([
       'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Xoriguer//QR//CA\n' + t + '\nEND:VCALENDAR'], { type: 'text/calendar' }), 'esdeveniment.ics') }));
-  } else if (/^(🆘|🩺)/.test(t)) tipus = t.startsWith('🆘') ? '🆘 Emergència' : '🩺 Fitxa mèdica';
+  } else if (/^(🆘|🩺)/.test(t)) tipus = t.startsWith('🆘') ? T('🆘 Emergència') : T('🩺 Fitxa mèdica');
   R.replaceChildren(el('div', { class: 'tipus', text: tipus }), el('pre', { text: mostra }),
     el('div', { class: 'botons' }, acc, C.esXifrat(t) ? null : copia,
-      el('button', { class: 'b sec', text: '📷 Llegeix-ne un altre', onclick: () => $('#obre-camera').click() })));
+      el('button', { class: 'b sec', text: T('📷 Llegeix-ne un altre'), onclick: () => $('#obre-camera').click() })));
   R.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // ------------------------------------------------------------------ més: família i còpies
 function pintaMes() {
   $('#persones').replaceChildren(...E.persones.map(p => el('span', { class: 'xip' }, p,
-    el('button', { title: 'Treu', text: '✕', onclick: () => { E.persones = E.persones.filter(x => x !== p); desa(); pintaMes(); } }))));
-  $('#ultima-copia').textContent = E.ultimaCopia ? 'Última còpia: ' + new Date(E.ultimaCopia).toLocaleDateString('ca') : 'Encara no has desat cap còpia.';
+    el('button', { title: T('Treu'), text: '✕', onclick: () => { E.persones = E.persones.filter(x => x !== p); desa(); pintaMes(); } }))));
+  $('#ultima-copia').textContent = E.ultimaCopia ? T('Última còpia: {d}', { d: new Date(E.ultimaCopia).toLocaleDateString(LANG) }) : T('Encara no has desat cap còpia.');
 }
 $('#afegeix-persona').onclick = () => {
   const v = $('#nova-persona').value.trim();
@@ -762,8 +770,8 @@ $('#importa').onchange = async e => {
     E.fitxesMeves.push(...(d.fitxesMeves || []).filter(i => !fm.has(i.id)));
     for (const p of d.persones || []) if (!E.persones.includes(p)) E.persones.push(p);
     desa(); pintaFitxes(); pintaMes();
-    avis(`Recuperats ${nous.length} QR nous`);
-  } catch (err) { avis('Aquest fitxer no és una còpia de Xoriguer QR', 3500); }
+    avis(T('Recuperats {n} QR nous', { n: nous.length }));
+  } catch (err) { avis(T('Aquest fitxer no és una còpia de Xoriguer QR'), 3500); }
 };
 
 // ------------------------------------------------------------------ inici
