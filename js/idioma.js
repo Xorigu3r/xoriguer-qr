@@ -328,6 +328,17 @@ const F = {
   "Títol (no va dins el QR)": ["Título (no va dentro del QR)", "Titre (pas dans le QR)", "Title (not inside the QR)"],
   "Contacte": ["Contacto", "Contact", "Contact"],
   "Jo": ["Yo", "Moi", "Me"],
+  "Actualitzacions": ["Actualizaciones", "Mises à jour", "Updates"],
+  "🔄 Mira si hi ha versió nova": ["🔄 Buscar versión nueva", "🔄 Rechercher une nouvelle version", "🔄 Check for a new version"],
+  "Mirant…": ["Buscando…", "Recherche…", "Checking…"],
+  "No s'ha pogut mirar (sense connexió?)": ["No se ha podido comprobar (¿sin conexión?)", "Vérification impossible (pas de connexion ?)", "Couldn't check (no connection?)"],
+  "Ja tens la darrera versió ({v}).": ["Ya tienes la última versión ({v}).", "Vous avez déjà la dernière version ({v}).", "You already have the latest version ({v})."],
+  "Hi ha la versió {v}.": ["Está disponible la versión {v}.", "La version {v} est disponible.", "Version {v} is available."],
+  "Hi ha una versió nova: {v}": ["Hay una versión nueva: {v}", "Nouvelle version disponible : {v}", "A new version is available: {v}"],
+  "Tens la {v}. Les teves dades es mantenen.": ["Tienes la {v}. Tus datos se mantienen.", "Vous avez la {v}. Vos données sont conservées.", "You have {v}. Your data is kept."],
+  "⬇️ Baixa l'APK": ["⬇️ Descargar el APK", "⬇️ Télécharger l'APK", "⬇️ Download the APK"],
+  "⬇️ Baixa l'instal·lador": ["⬇️ Descargar el instalador", "⬇️ Télécharger l'installateur", "⬇️ Download the installer"],
+  "Ara no": ["Ahora no", "Pas maintenant", "Not now"],
 };
 
 // ---------------------------------------------------------------- blocs amb format (data-t)

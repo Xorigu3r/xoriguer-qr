@@ -1,7 +1,7 @@
 // XORIGUER QR · aplicació
 'use strict';
 (function () {
-const VERSIO = '1.2.0';
+const VERSIO = '1.2.1';
 const { FITXES, codificaPersonal, dataLocal, TXT } = window.XQR_FITXES;
 const T = window.T, LANG = window.XQR_IDIOMA.L;
 const C = window.XQR_CRIPTO;
@@ -773,6 +773,53 @@ $('#importa').onchange = async e => {
     avis(T('Recuperats {n} QR nous', { n: nous.length }));
   } catch (err) { avis(T('Aquest fitxer no és una còpia de Xoriguer QR'), 3500); }
 };
+
+// ------------------------------------------------------------------ versió nova (només a l'exe i a l'apk:
+// la web/iPhone s'actualitza sola). El mateix versio.json que fa servir la pàgina de descàrregues.
+const URL_VERSIO = 'https://raw.githubusercontent.com/Xorigu3r/xoriguer-versions/main/qr/versio.json';
+const PAGINA = 'https://xorigu3r.github.io/';
+function comparaVersio(a, b) {
+  const p = v => String(v).replace(/^v/i, '').split('.').map(x => parseInt(x, 10) || 0);
+  const x = p(a), y = p(b);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0) ? 1 : -1;
+  return 0;
+}
+async function miraVersio(manual) {
+  const estat = $('#estat-versio');
+  if (manual) estat.textContent = T('Mirant…');
+  let d;
+  try {
+    const r = await fetch(URL_VERSIO + '?t=' + Date.now(), { cache: 'no-store' });
+    d = await r.json();
+  } catch (e) {
+    if (manual) estat.textContent = T("No s'ha pogut mirar (sense connexió?)");
+    return;
+  }
+  const enllac = (ANDROID ? d.apk : d.url) || PAGINA;
+  if (!d.versio || comparaVersio(d.versio, VERSIO) <= 0) {
+    if (manual) estat.textContent = T('Ja tens la darrera versió ({v}).', { v: VERSIO });
+    return;
+  }
+  estat.textContent = T('Hi ha la versió {v}.', { v: d.versio });
+  if (!manual && E.versioAmagada === d.versio) return;
+  const b = $('#versio-nova');
+  b.replaceChildren(
+    el('span', { style: 'font-size:26px' }, '🆕'),
+    el('div', { class: 'txt' },
+      el('b', { text: T('Hi ha una versió nova: {v}', { v: d.versio }) }),
+      el('small', { text: (d.notes ? d.notes + ' · ' : '') + T('Tens la {v}. Les teves dades es mantenen.', { v: VERSIO }) })),
+    el('a', { class: 'b', href: enllac, target: ESCRIPTORI ? '_blank' : null, rel: 'noopener',
+      text: ANDROID ? T("⬇️ Baixa l'APK") : T("⬇️ Baixa l'instal·lador") }),
+    el('button', { class: 'tanca', title: T('Ara no'), text: '✕',
+      onclick: () => { b.hidden = true; E.versioAmagada = d.versio; desa(); } }));
+  b.hidden = false;
+  if (manual) { mostra('fitxes'); }
+}
+if (ANDROID || ESCRIPTORI) {
+  $('#bloc-versio').hidden = false;
+  $('#mira-versio').onclick = () => miraVersio(true);
+  setTimeout(() => miraVersio(false), 1500);
+}
 
 // ------------------------------------------------------------------ inici
 $('#versio').textContent = VERSIO;

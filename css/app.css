@@ -43,6 +43,14 @@ main { max-width: 1180px; margin: 0 auto; padding: 4px 16px 40px; }
   .cap-rotul .xm-mot { font-size: 22px; }
 }
 
+/* avís de versió nova */
+.versio-nova { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 14px 0 4px; padding: 12px 14px;
+  border-radius: var(--r); background: color-mix(in srgb, var(--taronja) 18%, var(--fons2)); border: 1px solid var(--taronja); }
+.versio-nova .txt { flex: 1 1 220px; }
+.versio-nova .txt b { display: block; }
+.versio-nova .txt small { color: var(--gris); }
+.versio-nova .tanca { background: none; border: 0; color: var(--gris); font-size: 18px; padding: 4px 8px; }
+
 /* targetes de fitxes */
 .graella { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 .fitxa { text-align: left; background: linear-gradient(160deg, color-mix(in srgb, var(--c, #FFA82E) 14%, var(--fons2)), var(--fons2) 60%);
