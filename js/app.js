@@ -787,6 +787,8 @@ function comparaVersio(a, b) {
 async function miraVersio(manual) {
   const estat = $('#estat-versio');
   if (manual) estat.textContent = T('Mirant…');
+  // app d'Android: s'actualitza sense reinstal·lar (xoriguer-actualitza.js)
+  if (window.XActualitza?.natiu) { await window.XActualitza.comprova(manual, (s) => { if (s || manual) estat.textContent = s; }); return; }
   let d;
   try {
     const r = await fetch(URL_VERSIO + '?t=' + Date.now(), { cache: 'no-store' });
@@ -818,6 +820,7 @@ async function miraVersio(manual) {
 if (ANDROID || ESCRIPTORI) {
   $('#bloc-versio').hidden = false;
   $('#mira-versio').onclick = () => miraVersio(true);
+  window.XActualitza?.inicia({ app: 'qr', versio: VERSIO });
   setTimeout(() => miraVersio(false), 1500);
 }
 
