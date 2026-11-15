@@ -1,6 +1,6 @@
 // Xoriguer QR · funcionament sense connexió
 // Quan canviïs l'app, puja el número de versió perquè els mòbils agafin la nova.
-const VERSION = "xoriguerqr-v5";
+const VERSION = "xoriguerqr-v5-icones";
 const APP = [
   "./", "index.html", "manifest.json", "css/app.css", "marca/marca.css", "marca/Montserrat-ExtraBold.ttf",
   "js/idioma.js", "js/fitxes.js", "js/dibuix.js", "js/cripto.js", "js/app.js", "vendor/qrcode.js", "vendor/jsQR.js",
