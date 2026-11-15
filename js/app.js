@@ -1,7 +1,7 @@
 // XORIGUER QR · aplicació
 'use strict';
 (function () {
-const VERSIO = '1.2.1';
+const VERSIO = '1.2.2';
 const { FITXES, codificaPersonal, dataLocal, TXT } = window.XQR_FITXES;
 const T = window.T, LANG = window.XQR_IDIOMA.L;
 const C = window.XQR_CRIPTO;
@@ -776,8 +776,8 @@ $('#importa').onchange = async e => {
 
 // ------------------------------------------------------------------ versió nova (només a l'exe i a l'apk:
 // la web/iPhone s'actualitza sola). El mateix versio.json que fa servir la pàgina de descàrregues.
-const URL_VERSIO = 'https://raw.githubusercontent.com/Xorigu3r/xoriguer-versions/main/qr/versio.json';
-const PAGINA = 'https://xorigu3r.github.io/';
+const URL_VERSIO = 'https://xoriguer.dev/versions/qr/versio.json';
+const PAGINA = 'https://xoriguer.dev/';
 function comparaVersio(a, b) {
   const p = v => String(v).replace(/^v/i, '').split('.').map(x => parseInt(x, 10) || 0);
   const x = p(a), y = p(b);
